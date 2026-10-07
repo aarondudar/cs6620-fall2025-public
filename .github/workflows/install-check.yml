@@ -1,0 +1,26 @@
+name: Install check
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 12 * * 1" # weekly, to catch breakage from new upstream releases
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9 matches the EC2 deployment (start.sh); the others track what students install locally
+        python-version: ["3.9", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: Install requirements (wheels only, no source builds)
+        run: pip install --only-binary=:all: -r requirements.txt
+      - name: Import the app
+        run: python -c "import app"
